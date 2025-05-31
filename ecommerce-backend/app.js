@@ -16,6 +16,13 @@ mongoose.connect(process.env.MONGO_URI)
 
 app.use('/api/auth', authRoutes);
 
+const productRoutes = require('./routes/product.routes');
+app.use('/api/productos', productRoutes);
+
+const userRoutes = require('./routes/user.routes');
+app.use('/api/users', userRoutes);
+
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

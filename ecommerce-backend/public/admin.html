@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin - Productos</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    h1 { color: #2e7d32; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #2e7d32; color: white; }
+    tr:hover { background-color: #f1f1f1; }
+    button { padding: 5px 10px; margin: 2px; cursor: pointer; }
+    .edit-btn { background: orange; color: white; border: none; }
+    .delete-btn { background: crimson; color: white; border: none; }
+    .create-btn { background: #2e7d32; color: white; border: none; margin-bottom: 15px; }
+    input[type="text"], input[type="number"] {
+      padding: 5px;
+      margin-right: 10px;
+      width: 200px;
+    }
+    form { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Gestión de Productos</h1>
+  <button class="create-btn" onclick="mostrarFormulario()">➕ Nuevo Producto</button>
+
+  <div id="formulario" style="display: none; margin-bottom: 20px;">
+    <h3 id="form-title">Crear Producto</h3>
+    <form id="productoForm">
+      <input type="hidden" id="_id">
+      <input type="text" id="nombre" placeholder="Nombre" required>
+      <input type="text" id="categoria" placeholder="Categoría" required>
+      <input type="number" id="precio" placeholder="Precio" required>
+      <input type="number" id="stock" placeholder="Stock" required>
+      <input type="text" id="imagen" placeholder="URL Imagen">
+      <input type="text" id="descripcion" placeholder="Descripción">
+      <button type="submit">Guardar</button>
+      <button type="button" onclick="cancelarEdicion()">Cancelar</button>
+    </form>
+  </div>
+
+  <input type="text" id="buscar" placeholder="Buscar por nombre..." onkeyup="filtrarTabla()">
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-productos"></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem('token');
+    let productos = [];
+
+    const cargarProductos = () => {
+      fetch('/api/productos', {
+        headers: { Authorization: token }
+      })
+        .then(res => res.json())
+        .then(data => {
+          productos = data;
+          renderizarTabla();
+        });
+    };
+
+    const renderizarTabla = () => {
+      const tbody = document.getElementById('tabla-productos');
+      tbody.innerHTML = '';
+      productos.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.nombre}</td>
+            <td>${p.categoria}</td>
+            <td>S/ ${p.precio.toFixed(2)}</td>
+            <td>${p.stock}</td>
+            <td>
+              <button class="edit-btn" onclick='editar(${JSON.stringify(p)})'>✏️</button>
+              <button class="delete-btn" onclick="eliminar('${p._id}')">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    const mostrarFormulario = () => {
+      document.getElementById('formulario').style.display = 'block';
+      document.getElementById('form-title').innerText = 'Crear Producto';
+      document.getElementById('productoForm').reset();
+      document.getElementById('_id').value = '';
+    };
+
+    const cancelarEdicion = () => {
+      document.getElementById('formulario').style.display = 'none';
+      document.getElementById('productoForm').reset();
+    };
+
+    document.getElementById('productoForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const datos = {
+        nombre: nombre.value,
+        categoria: categoria.value,
+        precio: parseFloat(precio.value),
+        stock: parseInt(stock.value),
+        imagen: imagen.value,
+        descripcion: descripcion.value
+      };
+
+      const id = document.getElementById('_id').value;
+      const metodo = id ? 'PUT' : 'POST';
+      const url = id ? `/api/productos/${id}` : '/api/productos';
+
+      fetch(url, {
+        method: metodo,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify(datos)
+      })
+        .then(r => r.json())
+        .then(() => {
+          cargarProductos();
+          cancelarEdicion();
+        });
+    });
+
+    const editar = (producto) => {
+      mostrarFormulario();
+      document.getElementById('form-title').innerText = 'Editar Producto';
+      Object.keys(producto).forEach(key => {
+        if (document.getElementById(key)) {
+          document.getElementById(key).value = producto[key];
+        }
+      });
+    };
+
+    const eliminar = id => {
+      if (confirm('¿Eliminar este producto?')) {
+        fetch(`/api/productos/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: token }
+        })
+          .then(r => r.json())
+          .then(() => cargarProductos());
+      }
+    };
+
+    const filtrarTabla = () => {
+      const filtro = document.getElementById('buscar').value.toLowerCase();
+      const filas = document.querySelectorAll('#tabla-productos tr');
+      filas.forEach(fila => {
+        const texto = fila.innerText.toLowerCase();
+        fila.style.display = texto.includes(filtro) ? '' : 'none';
+      });
+    };
+
+    cargarProductos();
+  </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tienda Saludable</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+
+    header {
+      background: #2e7d32;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 { margin: 0; }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      padding: 6px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .cart-icon {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cart-count {
+      background: red;
+      color: white;
+      font-size: 12px;
+      border-radius: 50%;
+      padding: 2px 6px;
+      position: absolute;
+      top: -5px;
+      right: -10px;
+    }
+
+    .layout {
+      display: flex;
+    }
+
+    aside {
+      width: 200px;
+      background: #fff;
+      padding: 15px;
+      height: calc(100vh - 60px);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    aside h3 { color: #2e7d32; }
+
+    aside ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    aside li {
+      margin-bottom: 10px;
+      cursor: pointer;
+      color: #444;
+    }
+
+    aside li:hover {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    main {
+      flex-grow: 1;
+      padding: 20px;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: flex-start;
+    }
+
+    .card {
+      background: white;
+      width: 230px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+    }
+
+    .card h3 { margin: 10px 0 5px; }
+    .card button {
+      background: #2e7d32;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #carrito-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100%;
+      background: white;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      padding: 20px;
+      transition: right 0.3s;
+      overflow-y: auto;
+    }
+
+    #carrito-panel.visible {
+      right: 0;
+    }
+
+    .carrito-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .carrito-total {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .carrito-pagar {
+      margin-top: 10px;
+      padding: 10px;
+      background: #2e7d32;
+      color: white;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ecommerce Saludable</h1>
+    <div class="search-bar">
+      <input type="text" id="buscar" placeholder="Buscar...">
+      <button onclick="buscar()">Buscar</button>
+      <button onclick="logout()" style="background:#fff;color:#2e7d32;border:none;padding:6px 10px;border-radius:5px;cursor:pointer;">🚪 Salir</button>
+      <div class="cart-icon" onclick="toggleCarrito()">
+        🛒 <span class="cart-count" id="cart-count">0</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <h3>Categorías</h3>
+      <ul id="lista-categorias"></ul>
+    </aside>
+
+    <main>
+      <div class="grid" id="productos"></div>
+    </main>
+  </div>
+
+  <div id="carrito-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>🛒 Tu Carrito</h2>
+      <button onclick="toggleCarrito()" style="font-size:18px;background:none;border:none;cursor:pointer;">❌</button>
+    </div>
+    <div id="carrito-contenido"></div>
+    <div class="carrito-total" id="carrito-total"></div>
+    <button class="carrito-pagar" onclick="pagar()">Realizar Pedido</button>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+    const renderCarrito = () => {
+      const cont = document.getElementById('carrito-contenido');
+      const totalDiv = document.getElementById('carrito-total');
+      cont.innerHTML = '';
+      let total = 0;
+
+      carrito.forEach((item, i) => {
+        total += item.precio * item.cantidad;
+        cont.innerHTML += `
+          <div class="carrito-item">
+            ${item.nombre} x ${item.cantidad}
+            <div>
+              <button onclick="sumar(${i})">+</button>
+              <button onclick="restar(${i})">-</button>
+              <button onclick="eliminar(${i})">🗑️</button>
+            </div>
+          </div>`;
+      });
+
+      totalDiv.innerText = `Total: S/ ${total.toFixed(2)}`;
+      document.getElementById('cart-count').innerText = carrito.reduce((acc, el) => acc + el.cantidad, 0);
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+    };
+
+    const toggleCarrito = () => {
+      document.getElementById('carrito-panel').classList.toggle('visible');
+    };
+
+    const sumar = i => { carrito[i].cantidad++; renderCarrito(); };
+    const restar = i => { carrito[i].cantidad > 1 ? carrito[i].cantidad-- : carrito.splice(i, 1); renderCarrito(); };
+    const eliminar = i => { carrito.splice(i, 1); renderCarrito(); };
+    const pagar = () => {
+      if (!carrito.length) return alert('Carrito vacío');
+      alert('Pedido realizado (simulado)');
+      carrito.length = 0;
+      renderCarrito();
+    };
+
+    const agregarAlCarrito = (id, nombre, precio) => {
+      const existe = carrito.find(p => p.id === id);
+      existe ? existe.cantidad++ : carrito.push({ id, nombre, precio, cantidad: 1 });
+      renderCarrito();
+    };
+
+    const buscar = () => {
+      const texto = document.getElementById('buscar').value.toLowerCase();
+      document.querySelectorAll('.card').forEach(card => {
+        const nombre = card.querySelector('h3').innerText.toLowerCase();
+        card.style.display = nombre.includes(texto) ? 'block' : 'none';
+      });
+    };
+
+    const cargarProductos = (categoria = null) => {
+      let url = '/api/productos';
+      if (categoria) url += `/categoria/${encodeURIComponent(categoria)}`;
+
+      fetch(url, { headers: { Authorization: token } })
+        .then(r => r.json())
+        .then(data => {
+          const grid = document.getElementById('productos');
+          grid.innerHTML = '';
+          data.forEach(p => {
+            grid.innerHTML += `
+              <div class="card">
+                <img src="${p.imagen}" alt="${p.nombre}">
+                <h3>${p.nombre}</h3>
+                <p>S/ ${p.precio.toFixed(2)}</p>
+                <p>${p.categoria}</p>
+                <button onclick="agregarAlCarrito('${p._id}', '${p.nombre}', ${p.precio})">Agregar</button>
+              </div>`;
+          });
+        });
+    };
+
+    const cargarCategorias = () => {
+      fetch('/api/productos/categorias', { headers: { Authorization: token } })
+        .then(r => r.json())
+        .then(categorias => {
+          const ul = document.getElementById('lista-categorias');
+          ul.innerHTML = `<li onclick="cargarProductos()">🔁 Ver todos</li>`;
+          categorias.forEach(c => {
+            ul.innerHTML += `<li onclick="cargarProductos('${c}')">${c}</li>`;
+          });
+        });
+    };
+
+    const logout = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('carrito');
+      window.location.href = 'login.html';
+    };
+
+    cargarProductos();
+    cargarCategorias();
+    renderCarrito();
+  </script>
+</body>
+</html>
