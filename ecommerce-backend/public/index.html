@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro - Ecommerce</title>
+</head>
+<body>
+  <h2>Registrarse</h2>
+  <form id="registerForm">
+    <label>Nombre:</label><br />
+    <input type="text" name="nombre" required /><br /><br />
+
+    <label>Email:</label><br />
+    <input type="email" name="email" required /><br /><br />
+
+    <label>Contraseña:</label><br />
+    <input type="password" name="password" required /><br /><br />
+
+    <label>Rol:</label><br />
+    <select name="rol">
+      <option value="usuario">Usuario</option>
+      <option value="admin">Admin</option>
+    </select><br /><br />
+
+    <button type="submit">Registrarse</button>
+  </form>
+
+  <br />
+  <button onclick="window.location.href='login.html'">¿Ya tienes cuenta? Inicia sesión</button>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert(result.msg);
+          window.location.href = 'login.html';
+        } else {
+          alert(result.msg || 'Error al registrarse');
+        }
+      } catch (error) {
+        alert('Error en el servidor');
+      }
+    });
+  </script>
+</body>
+</html>
