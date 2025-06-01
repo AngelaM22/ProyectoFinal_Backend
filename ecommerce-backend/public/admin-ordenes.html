@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Órdenes - Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { color: #2e7d32; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border: 1px solid #ccc; text-align: left; }
+    th { background: #2e7d32; color: white; }
+    select, button { padding: 6px 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>📋 Órdenes de Compra</h2>
+  <table id="ordenesTabla">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Productos</th>
+        <th>Total</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    fetch('/api/ordenes', {
+      headers: {
+        Authorization: token
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("📦 Respuesta de órdenes:", data);
+
+        if (!Array.isArray(data)) {
+          alert(data.msg || 'Error al cargar órdenes');
+          return;
+        }
+
+        const tbody = document.querySelector('#ordenesTabla tbody');
+        data.forEach(orden => {
+          const fila = document.createElement('tr');
+          const productos = orden.productos.map(p => `${p.producto.nombre} (x${p.cantidad})`).join(', ');
+          fila.innerHTML = `
+            <td>${orden.usuario?.nombre || 'Sin nombre'}</td>
+            <td>${productos}</td>
+            <td>S/ ${orden.total.toFixed(2)}</td>
+            <td>
+              <select onchange="cambiarEstado('${orden._id}', this.value)">
+                <option value="pendiente" ${orden.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                <option value="enviado" ${orden.estado === 'enviado' ? 'selected' : ''}>Enviado</option>
+                <option value="entregado" ${orden.estado === 'entregado' ? 'selected' : ''}>Entregado</option>
+              </select>
+            </td>
+            <td>${new Date(orden.createdAt).toLocaleString()}</td>
+            <td><button onclick="cambiarEstado('${orden._id}', document.querySelector('select').value)">Actualizar</button></td>
+          `;
+          tbody.appendChild(fila);
+        });
+      })
+      .catch(err => {
+        console.error("❌ Error al cargar órdenes:", err);
+        alert('Error al cargar órdenes');
+      });
+
+    function cambiarEstado(id, nuevoEstado) {
+      fetch(`/api/ordenes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify({ estado: nuevoEstado })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.msg || 'Estado actualizado');
+        location.reload();
+      })
+      .catch(err => {
+        console.error('Error al actualizar estado:', err);
+        alert('Error al actualizar estado');
+      });
+    }
+  </script>
+
+</body>
+</html>

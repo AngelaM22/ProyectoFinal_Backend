@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Usuarios</title>
+  <style>
+    body { font-family: Arial; background: #f9f9f9; padding: 20px; }
+    h2 { color: #2e7d32; }
+    form {
+      background: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input, select {
+      padding: 8px;
+      margin: 5px;
+      width: 200px;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .crear { background: #4caf50; color: white; }
+    .eliminar { background: #e53935; color: white; }
+    .rol { background: #039be5; color: white; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background: #388e3c; color: white; }
+  </style>
+</head>
+<body>
+  <h2>👤 Gestión de Usuarios</h2>
+
+  <form id="formCrearUsuario">
+    <input type="text" id="nombre" placeholder="Nombre" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Contraseña" required>
+    <select id="rol">
+      <option value="cliente">Cliente</option>
+      <option value="admin">Administrador</option>
+    </select>
+    <button type="submit" class="crear">➕ Crear Usuario</button>
+  </form>
+
+  <table id="tablaUsuarios">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    function cargarUsuarios() {
+      fetch('/api/users', {
+        headers: { Authorization: token }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector('#tablaUsuarios tbody');
+          tbody.innerHTML = '';
+
+          data.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${u.nombre}</td>
+              <td>${u.email}</td>
+              <td>${u.rol}</td>
+              <td>
+                <button class="rol" onclick="cambiarRol('${u._id}', '${u.rol}')">Cambiar Rol</button>
+                <button class="eliminar" onclick="eliminarUsuario('${u._id}')">Eliminar</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function cambiarRol(id, rolActual) {
+      const nuevoRol = rolActual === 'admin' ? 'cliente' : 'admin';
+      fetch(`/api/users/${id}/rol`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify({ rol: nuevoRol })
+      })
+        .then(res => res.json())
+        .then(() => cargarUsuarios());
+    }
+
+    function eliminarUsuario(id) {
+      if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+      fetch(`/api/users/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: token }
+      })
+        .then(res => res.json())
+        .then(() => cargarUsuarios());
+    }
+
+    document.getElementById('formCrearUsuario').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const data = {
+        nombre: document.getElementById('nombre').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        rol: document.getElementById('rol').value
+      };
+
+      fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(() => {
+        alert('Usuario creado exitosamente');
+        cargarUsuarios();
+        e.target.reset();
+      });
+    });
+
+    cargarUsuarios();
+  </script>
+</body>
+</html>

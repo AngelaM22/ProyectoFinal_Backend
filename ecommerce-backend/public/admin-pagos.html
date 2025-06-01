@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>💳 Pagos - Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { color: #2e7d32; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #2e7d32; color: white; }
+  </style>
+</head>
+<body>
+
+  <h2>💳 Historial de Pagos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Email</th>
+        <th>Monto</th>
+        <th>Método</th>
+        <th>Fecha</th>
+        <th>Orden</th>
+      </tr>
+    </thead>
+    <tbody id="tablaPagos"></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    fetch('/api/pagos', {
+      headers: { Authorization: token }
+    })
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById('tablaPagos');
+      data.forEach(pago => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${pago.usuario?.nombre || '-'}</td>
+          <td>${pago.usuario?.email || '-'}</td>
+          <td>S/ ${pago.total.toFixed(2)}</td>
+          <td>${pago.metodo}</td>
+          <td>${new Date(pago.fecha).toLocaleString()}</td>
+          <td>${pago.orden?._id || 'N/A'} - ${pago.orden?.estado || '-'}</td>
+        `;
+        tbody.appendChild(fila);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Error al cargar los pagos');
+    });
+  </script>
+
+</body>
+</html>

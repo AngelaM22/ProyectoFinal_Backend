@@ -37,10 +37,15 @@
 
         const result = await res.json();
         if (res.ok) {
-          // Guarda el token y redirige
           localStorage.setItem('token', result.token);
           alert(result.msg);
-          window.location.href = 'productos.html'; // redirige al catálogo
+
+          // Redirigir según el rol
+          if (result.rol === 'admin') {
+            window.location.href = 'admin-dashboard.html';
+          } else {
+            window.location.href = 'productos.html';
+          }
         } else {
           alert(result.msg || 'Error al iniciar sesión');
         }

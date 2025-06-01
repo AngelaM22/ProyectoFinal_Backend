@@ -1,0 +1,61 @@
+const Order = require('../models/order');
+const Product = require('../models/product');
+const Orden = require('../models/order');
+const Pago = require('../models/pago');
+
+
+exports.crearOrden = async (req, res) => {
+  try {
+    const { productos } = req.body;
+    const userId = req.user.id;
+
+    let total = 0;
+
+    for (const item of productos) {
+      const producto = await Product.findById(item.producto);
+      if (!producto) return res.status(404).json({ msg: 'Producto no encontrado' });
+      if (producto.stock < item.cantidad) {
+        return res.status(400).json({ msg: `Stock insuficiente para ${producto.nombre}` });
+      }
+      total += producto.precio * item.cantidad;
+      producto.stock -= item.cantidad;
+      await producto.save();
+    }
+
+    const nuevaOrden = new Order({ usuario: userId, productos, total });
+    await nuevaOrden.save();
+
+    res.status(201).json({ msg: 'Orden creada con éxito', orden: nuevaOrden });
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al crear la orden', error: error.message });
+  }
+};
+
+exports.obtenerOrdenes = async (req, res) => {
+  try {
+    const ordenes = await Order.find()
+      .populate('usuario', 'nombre email')
+      .populate('productos.producto', 'nombre precio imagen');
+    res.json(ordenes);
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al obtener órdenes', error: error.message });
+  }
+};
+
+exports.actualizarEstado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    const orden = await Orden.findById(id);
+    if (!orden) return res.status(404).json({ msg: 'Orden no encontrada' });
+
+    orden.estado = estado;
+    await orden.save();
+
+    res.json({ msg: 'Estado actualizado', orden });
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al actualizar estado', error: error.message });
+  }
+};
+

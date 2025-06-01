@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Control - Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      color: #2e7d32;
+    }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex: 1 1 220px;
+      text-align: center;
+    }
+    canvas {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h2>📊 Dashboard - Bienvenida Juana 👩‍💼</h2>
+
+  <div class="grid">
+    <div class="card"><h3>Usuarios</h3><p id="totalUsuarios">...</p></div>
+    <div class="card"><h3>Productos</h3><p id="totalProductos">...</p></div>
+    <div class="card"><h3>Órdenes</h3><p id="totalOrdenes">...</p></div>
+    <div class="card"><h3>Total Ventas (S/.)</h3><p id="totalVentas">...</p></div>
+  </div>
+
+  <h3 style="margin-top: 40px;">🥇 Productos más vendidos</h3>
+  <canvas id="graficoProductos" width="600" height="300"></canvas>
+
+  <script>
+    const token = localStorage.getItem('token');
+    fetch('/api/admin/dashboard', {
+      headers: {
+        Authorization: token
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('totalUsuarios').textContent = data.totalUsuarios;
+      document.getElementById('totalProductos').textContent = data.totalProductos;
+      document.getElementById('totalOrdenes').textContent = data.totalOrdenes;
+      document.getElementById('totalVentas').textContent = 'S/ ' + data.totalVentas.toFixed(2);
+
+      const nombres = data.productosPopulares.map(p => p._id);
+      const cantidades = data.productosPopulares.map(p => p.cantidad);
+
+      new Chart(document.getElementById('graficoProductos'), {
+        type: 'bar',
+        data: {
+          labels: nombres,
+          datasets: [{
+            label: 'Unidades Vendidas',
+            data: cantidades,
+            backgroundColor: '#66bb6a'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Top 5 productos más vendidos'
+            }
+          }
+        }
+      });
+    })
+    .catch(err => {
+      console.error('Error cargando métricas:', err);
+    });
+  </script>
+</body>
+</html>

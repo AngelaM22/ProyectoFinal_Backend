@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestión de Productos</title>
+  <style>
+    body { font-family: Arial; background: #f5f5f5; padding: 20px; }
+    h2 { color: #2e7d32; }
+    form, table { background: white; border-radius: 6px; padding: 15px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    form { margin-bottom: 30px; }
+    input, select, textarea {
+      margin: 6px; padding: 8px; width: 200px; border: 1px solid #ccc; border-radius: 4px;
+    }
+    button {
+      padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer;
+    }
+    .crear { background: #4caf50; color: white; }
+    .editar { background: #039be5; color: white; }
+    .eliminar { background: #e53935; color: white; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+    th { background: #388e3c; color: white; }
+    #editForm { display: none; background: #fff8e1; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h2>📦 Gestión de Productos</h2>
+
+  <form id="formProducto">
+    <input type="text" id="nombre" placeholder="Nombre" required />
+    <input type="text" id="categoria" placeholder="Categoría" required />
+    <input type="number" id="precio" placeholder="Precio" step="0.01" required />
+    <input type="number" id="stock" placeholder="Stock" required />
+    <input type="text" id="imagen" placeholder="URL Imagen" />
+    <textarea id="descripcion" placeholder="Descripción" rows="3"></textarea><br>
+    <button type="submit" class="crear">Crear Producto</button>
+  </form>
+
+  <table id="tablaProductos">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <form id="editForm">
+    <h3>✏️ Editar Producto</h3>
+    <input type="hidden" id="editId" />
+    <input type="text" id="editNombre" placeholder="Nombre" required />
+    <input type="text" id="editCategoria" placeholder="Categoría" required />
+    <input type="number" id="editPrecio" placeholder="Precio" step="0.01" required />
+    <input type="number" id="editStock" placeholder="Stock" required />
+    <input type="text" id="editImagen" placeholder="URL Imagen" />
+    <textarea id="editDescripcion" placeholder="Descripción" rows="3"></textarea><br>
+    <button type="submit" class="editar">Guardar Cambios</button>
+  </form>
+
+  <script>
+    const token = localStorage.getItem('token');
+    const tabla = document.querySelector('#tablaProductos tbody');
+
+    async function cargarProductos() {
+      const res = await fetch('/api/productos');
+      const productos = await res.json();
+
+      tabla.innerHTML = '';
+      productos.forEach(p => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${p.nombre}</td>
+            <td>${p.categoria}</td>
+            <td>S/ ${p.precio.toFixed(2)}</td>
+            <td>${p.stock}</td>
+            <td>
+              <button class="editar" onclick="mostrarEditar('${p._id}', '${p.nombre}', '${p.categoria}', ${p.precio}, ${p.stock}, '${p.descripcion}', '${p.imagen}')">Editar</button>
+              <button class="eliminar" onclick="eliminarProducto('${p._id}')">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('formProducto').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const data = {
+        nombre: document.getElementById('nombre').value,
+        categoria: document.getElementById('categoria').value,
+        precio: parseFloat(document.getElementById('precio').value),
+        stock: parseInt(document.getElementById('stock').value),
+        imagen: document.getElementById('imagen').value,
+        descripcion: document.getElementById('descripcion').value
+      };
+
+      const res = await fetch('/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify(data)
+      });
+
+      await res.json();
+      alert('Producto creado');
+      this.reset();
+      cargarProductos();
+    });
+
+    function mostrarEditar(id, nombre, categoria, precio, stock, descripcion, imagen) {
+      document.getElementById('editForm').style.display = 'block';
+      document.getElementById('editId').value = id;
+      document.getElementById('editNombre').value = nombre;
+      document.getElementById('editCategoria').value = categoria;
+      document.getElementById('editPrecio').value = precio;
+      document.getElementById('editStock').value = stock;
+      document.getElementById('editDescripcion').value = descripcion;
+      document.getElementById('editImagen').value = imagen;
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('editId').value;
+      const data = {
+        nombre: document.getElementById('editNombre').value,
+        categoria: document.getElementById('editCategoria').value,
+        precio: parseFloat(document.getElementById('editPrecio').value),
+        stock: parseInt(document.getElementById('editStock').value),
+        imagen: document.getElementById('editImagen').value,
+        descripcion: document.getElementById('editDescripcion').value
+      };
+
+      await fetch(`/api/productos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify(data)
+      });
+
+      alert('Producto actualizado');
+      this.reset();
+      document.getElementById('editForm').style.display = 'none';
+      cargarProductos();
+    });
+
+    async function eliminarProducto(id) {
+      if (!confirm('¿Eliminar este producto?')) return;
+      await fetch(`/api/productos/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: token }
+      });
+      cargarProductos();
+    }
+
+    cargarProductos();
+  </script>
+</body>
+</html>
