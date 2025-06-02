@@ -1,7 +1,8 @@
 const Order = require('../models/order');
 const Product = require('../models/product');
 const Orden = require('../models/order');
-const Pago = require('../models/pago');
+const Pago = require('../models/payment');
+const Noti = require('./notification.controller');
 
 
 exports.crearOrden = async (req, res) => {
@@ -24,6 +25,8 @@ exports.crearOrden = async (req, res) => {
 
     const nuevaOrden = new Order({ usuario: userId, productos, total });
     await nuevaOrden.save();
+
+    await Noti.crear(`Nueva orden creada por el usuario ${req.user.id}`);
 
     res.status(201).json({ msg: 'Orden creada con éxito', orden: nuevaOrden });
   } catch (error) {
