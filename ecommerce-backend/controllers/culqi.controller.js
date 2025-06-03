@@ -28,7 +28,7 @@ exports.procesarPago = async (req, res) => {
 
     await pago.save();
 
-    res.status(200).json({ msg: ' Pago procesado con Culqi', charge });
+    res.status(200).json({ msg: 'Pago procesado con Culqi', charge });
   } catch (error) {
     res.status(500).json({ msg: 'Error en el pago Culqi', error: error.message });
   }
