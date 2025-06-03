@@ -5,9 +5,6 @@ const User = require('../models/user');
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-// NUEVO: Importamos el modelo de pagos
-const Pago = require('../models/payment');
-
 // Ruta: /api/admin/dashboard
 router.get('/dashboard', verifyToken(['admin']), async (req, res) => {
   try {
