@@ -1,7 +1,6 @@
 const Order = require('../models/order');
 const Product = require('../models/product');
 const Orden = require('../models/order');
-const Pago = require('../models/payment');
 const Noti = require('./notification.controller');
 
 

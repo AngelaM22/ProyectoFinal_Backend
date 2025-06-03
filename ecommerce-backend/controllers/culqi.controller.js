@@ -1,35 +1,62 @@
-const Culqi = require('culqi-node');
-const Payment = require('../models/payment');
-const Order = require('../models/order');
+// controllers/culqi.controller.js
+require('dotenv').config();
+const axios = require('axios');
 
-const culqi = new Culqi({
-  publicKey: process.env.CULQI_PUBLIC_KEY,
-  privateKey: process.env.CULQI_SECRET_KEY,
-  pciCompliant: true
-});
-
-exports.procesarPago = async (req, res) => {
-  const { token, email, monto, ordenId } = req.body;
-
+exports.crearCargo = async (req, res) => {
   try {
-    const charge = await culqi.charges.create({
-      amount: monto,
-      currency_code: 'PEN',
+    const {
+      card_number,
+      cvv,
+      expiration_month,
+      expiration_year,
       email,
-      source_id: token
-    });
+      monto,
+    } = req.body;
 
-    const pago = new Payment({
-      usuario: req.user.id,
-      orden: ordenId,
-      total: monto / 100,
-      metodo: 'Culqi'
-    });
+    // 1. Crear token con los datos de la tarjeta
+    const tokenResponse = await axios.post(
+      'https://api.culqi.com/v2/tokens',
+      {
+        card_number,
+        cvv,
+        expiration_month,
+        expiration_year,
+        email,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.CULQI_PUBLIC_KEY}`,
+        },
+      }
+    );
 
-    await pago.save();
+    const token = tokenResponse.data.id;
 
-    res.status(200).json({ msg: 'Pago procesado con Culqi', charge });
+    // 2. Crear el cargo con el token
+    const chargeResponse = await axios.post(
+      'https://api.culqi.com/v2/charges',
+      {
+        amount: parseInt(monto) * 100, // En céntimos
+        currency_code: 'PEN',
+        email,
+        source_id: token,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.CULQI_SECRET_KEY}`,
+        },
+      }
+    );
+
+    res.json({ ok: true, data: chargeResponse.data });
   } catch (error) {
-    res.status(500).json({ msg: 'Error en el pago Culqi', error: error.message });
+    console.error(error.response?.data || error.message);
+    res.status(500).json({
+      ok: false,
+      message: 'Error al procesar el pago',
+      error: error.response?.data || error.message,
+    });
   }
 };

@@ -1,10 +1,12 @@
-// routes/admin.routes.js
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middlewares/auth.middleware');
 const User = require('../models/user');
 const Product = require('../models/product');
 const Order = require('../models/order');
+
+// NUEVO: Importamos el modelo de pagos
+const Pago = require('../models/payment');
 
 // Ruta: /api/admin/dashboard
 router.get('/dashboard', verifyToken(['admin']), async (req, res) => {
@@ -18,7 +20,8 @@ router.get('/dashboard', verifyToken(['admin']), async (req, res) => {
 
     const productosPopulares = await Order.aggregate([
       { $unwind: "$productos" },
-      { $group: {
+      {
+        $group: {
           _id: "$productos.nombre",
           cantidad: { $sum: "$productos.cantidad" }
         }
@@ -36,6 +39,27 @@ router.get('/dashboard', verifyToken(['admin']), async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ msg: 'Error al obtener métricas', error: error.message });
+  }
+});
+
+
+// NUEVO: Ruta para obtener las ventas
+router.get('/ventas', verifyToken(['admin']), async (req, res) => {
+  try {
+    const ventas = await Order.find().sort({ fecha: -1 });
+    res.json(ventas);
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al obtener ventas', error: error.message });
+  }
+});
+
+// NUEVO: Ruta para obtener logs de pagos
+router.get('/logs', verifyToken(['admin']), async (req, res) => {
+  try {
+    const logs = await Pago.find().sort({ fecha: -1 });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al obtener logs de pago', error: error.message });
   }
 });
 

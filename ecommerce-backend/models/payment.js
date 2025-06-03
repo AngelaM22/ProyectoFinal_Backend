@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
-const paymentSchema = new mongoose.Schema({
-  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  orden: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
-  total: { type: Number, required: true },
-  fecha: { type: Date, default: Date.now },
-  metodo: { type: String, default: 'Simulado' }, // Tunki, tarjeta, etc.
+const paymentLogSchema = new mongoose.Schema({
+  ordenId: String,
+  tarjeta: String, // Se puede guardar enmascarado tipo "****1234"
+  estado: String,
+  fecha: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('payment', paymentSchema);
+module.exports = mongoose.model('Pago', paymentLogSchema);

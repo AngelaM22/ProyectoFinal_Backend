@@ -31,12 +31,11 @@
   <script>
     const token = localStorage.getItem('token');
 
-    fetch('/api/pagos', {
+    fetch('/api/process/pay', {
       headers: { Authorization: token }
     })
     .then(res => res.json())
     .then(data => {
-      console.log('📦 Pagos cargados:', data);
       const tbody = document.getElementById('tablaPagos');
       data.forEach(pago => {
         const fila = document.createElement('tr');
