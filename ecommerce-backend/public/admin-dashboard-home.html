@@ -49,12 +49,6 @@
       </div>
     </div>
 
-    <h4 class="text-success mb-3">🥇 Productos más vendidos</h4>
-    <div class="bg-white p-3 rounded shadow-sm">
-      <canvas id="graficoProductos" height="100"></canvas>
-    </div>
-  </div>
-
   <script>
     const token = localStorage.getItem('token');
     fetch('/api/admin/dashboard', {
