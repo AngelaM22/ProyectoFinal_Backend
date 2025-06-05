@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const cors = require('cors'); 
 
+// Importación de rutas
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const userRoutes = require('./routes/user.routes');
@@ -12,6 +14,14 @@ const notiRoutes = require('./routes/notification.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configuración segura de CORS
+const corsOptions = {
+  origin: ['http://localhost:3000'], 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+};
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.static('public'));
