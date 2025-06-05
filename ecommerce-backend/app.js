@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user.routes');
 const adminRoutes = require('./routes/admin.routes');
 const orderRoutes = require('./routes/order.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const validateRoutes = require('./routes/validate.routes');
 const notiRoutes = require('./routes/notification.routes');
 
 const app = express();
@@ -37,6 +38,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ordenes', orderRoutes);
 app.use('/api/payments/checkout', paymentRoutes);
+app.use('/api', validateRoutes);  
 app.use('/api/admin/notificaciones', notiRoutes);
 
 app.listen(PORT, () => {
