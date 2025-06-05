@@ -1,30 +1,24 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
 
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization;
+const verifyToken = (rolesPermitidos = []) => {
+  return (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).json({ msg: 'Token no proporcionado' });
 
-  if (!token) return res.status(401).json({ msg: 'Token no proporcionado' });
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
 
-  try {
-    const decoded = jwt.verify(token, 'secreto'); // Usa tu secreto JWT
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ msg: 'Token inválido' });
-  }
-};
+      // Verificar si el rol es permitido
+      if (rolesPermitidos.length > 0 && !rolesPermitidos.includes(decoded.rol)) {
+        return res.status(403).json({ msg: 'No tienes permiso para esta acción' });
+      }
 
-const isAdmin = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (user.rol !== 'admin') {
-      return res.status(403).json({ msg: 'Acceso denegado: solo administradores' });
+      next();
+    } catch (error) {
+      res.status(401).json({ msg: 'Token inválido' });
     }
-    next();
-  } catch (error) {
-    return res.status(500).json({ msg: 'Error al verificar rol', error: error.message });
-  }
+  };
 };
 
-module.exports = { verifyToken, isAdmin };
+module.exports = verifyToken;
