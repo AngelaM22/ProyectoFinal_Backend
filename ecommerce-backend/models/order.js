@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema({
   total: { type: Number, required: true },
   estado: { type: String, enum: ['pendiente', 'enviado', 'entregado'], default: 'pendiente' }
 }, {
-  timestamps: true  // genera createdAt y updatedAt
+  timestamps: true 
 });
 
 module.exports = mongoose.model('Order', orderSchema);

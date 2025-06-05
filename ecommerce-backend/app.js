@@ -26,7 +26,7 @@ app.use('/api/productos', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ordenes', orderRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use('/api/payments/checkout', paymentRoutes);
 app.use('/api/admin/notificaciones', notiRoutes);
 
 app.listen(PORT, () => {

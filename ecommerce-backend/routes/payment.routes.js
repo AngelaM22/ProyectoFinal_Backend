@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const culqiController = require('../controllers/payment.controller');
+const paymentController = require('../controllers/payment.controller');
 
-router.post('/pagar', culqiController.realizarPago);
+router.post('/checkout', paymentController.procesarPago);
 
 module.exports = router;

@@ -2,71 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Pago con Culqi</title>
+  <title>Checkout</title>
   <script src="https://checkout.culqi.com/js/v4"></script>
 </head>
 <body>
-  <h1>Pagar con Culqi</h1>
+  <h2>Pagar con Culqi</h2>
+  <p>Total: <span id="total">S/10.00</span></p>
+  <button onclick="procesarPago()">Pagar</button>
 
-  <label for="monto">Monto a pagar (S/): </label>
-  <input type="number" id="monto" placeholder="Ej: 50" min="1" step="0.01">
-  <button id="pagarBtn">Pagar</button>
-
-  <script>
-    Culqi.publicKey = 'pk_test_9j3tnJnCznXfrk34';
-
-    document.getElementById('pagarBtn').addEventListener('click', () => {
-      const montoSoles = parseFloat(document.getElementById('monto').value);
-      if (!montoSoles || montoSoles <= 0) {
-        alert('Por favor, ingresa un monto válido');
-        return;
-      }
-
-      const montoCulqi = Math.round(montoSoles * 100); // convertir a centavos
-
-      Culqi.settings({
-        title: 'Mi Tienda',
-        currency: 'PEN',
-        description: 'Pago del carrito',
-        amount: montoCulqi,
-      });
-
-      Culqi.open();
-      window.montoCulqi = montoCulqi; // guardar para usarlo luego
-    });
-
-    function culqi() {
-      if (Culqi.token) {
-        const token = Culqi.token.id;
-
-        fetch('/api/payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            token: token,
-            amount: window.montoCulqi
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.object === 'charge') {
-            alert('¡Pago exitoso!');
-            console.log('Venta registrada:', data);
-          } else {
-            alert('Error en el pago: ' + (data.user_message || 'verifica los datos'));
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert('Error inesperado en el servidor');
-        });
-
-      } else {
-        alert(Culqi.error.user_message);
-      }
-    }
-  </script>
+  <script src="/ecommerce-backend/models/checkout.js"></script>
 </body>
 </html>
