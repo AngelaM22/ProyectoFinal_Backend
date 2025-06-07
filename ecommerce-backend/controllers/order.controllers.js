@@ -2,7 +2,7 @@ const Order = require('../models/order');
 const Product = require('../models/product');
 const Orden = require('../models/order');
 const Noti = require('./notification.controller');
-
+const notiController = require('./notification.controller');
 
 exports.crearOrden = async (req, res) => {
   try {
@@ -61,3 +61,14 @@ exports.actualizarEstado = async (req, res) => {
   }
 };
 
+exports.confirmarPedido = async (req, res) => {
+  try {
+    const usuario = req.usuario;
+
+    await notiController.crear(`📦 Pedido confirmado por ${usuario.nombre}. Revisa WhatsApp o el panel de órdenes.`);
+
+    res.json({ msg: 'Pedido confirmado y enviado por WhatsApp' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Error al confirmar pedido', error: err.message });
+  }
+};

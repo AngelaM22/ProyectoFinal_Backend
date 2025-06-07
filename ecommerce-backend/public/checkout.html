@@ -2,14 +2,50 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Checkout</title>
+  <title>Checkout - Mi Tienda</title>
   <script src="https://checkout.culqi.com/js/v4"></script>
+  <script src="checkout.js" defer></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #lista-carrito li { margin-bottom: 5px; }
+    .btn { padding: 10px 20px; background-color: green; color: white; border: none; cursor: pointer; }
+  </style>
 </head>
 <body>
-  <h2>Pagar con Culqi</h2>
-  <p>Total: <span id="total">S/10.00</span></p>
-  <button onclick="procesarPago()">Pagar</button>
+  <h1>Resumen del Carrito</h1>
+  <ul id="lista-carrito"></ul>
+  <h3>Total: S/ <span id="total"></span></h3>
 
-  <script src="checkout.js"></script>
+  <button class="btn" onclick="procesarPago()">Pagar con Culqi</button>
 </body>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+    const total = localStorage.getItem("totalCarrito") || "0.00";
+
+    const lista = document.getElementById("lista-carrito");
+    const totalElement = document.getElementById("total");
+
+    carrito.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.nombre} - S/ ${item.precio.toFixed(2)}`;
+      lista.appendChild(li);
+    });
+
+    totalElement.textContent = total;
+
+    // Actualizar el monto del pago dinámicamente
+    window.procesarPago = function () {
+      Culqi.publicKey = 'pk_test_9j3tnJnCznXfrk34';
+      Culqi.settings({
+        title: 'Mi Tienda',
+        currency: 'PEN',
+        description: 'Pago por productos saludables',
+        amount: parseInt(parseFloat(total) * 100), // convertir a céntimos
+      });
+      Culqi.open();
+    }
+  });
+</script>
 </html>

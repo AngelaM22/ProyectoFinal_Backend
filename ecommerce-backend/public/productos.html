@@ -7,6 +7,7 @@
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
     #carrito-panel {
       position: fixed;
@@ -35,7 +36,7 @@
 </head>
 <body class="bg-light">
 
-  <!-- Header -->
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-success px-4">
     <a class="navbar-brand" href="#">🛒 Ecommerce Saludable</a>
     <div class="ms-auto d-flex align-items-center gap-2">
@@ -50,7 +51,7 @@
 
   <div class="container-fluid mt-4">
     <div class="row">
-      <!-- Sidebar de categorías -->
+      <!-- Sidebar Categorías -->
       <div class="col-md-2">
         <h5 class="text-success">Categorías</h5>
         <ul class="list-group" id="lista-categorias"></ul>
@@ -72,9 +73,14 @@
     <div id="carrito-contenido"></div>
     <div class="fw-bold mt-3" id="carrito-total">Total: S/ 0.00</div>
     <button class="btn btn-success w-100 mt-2" onclick="irACheckout()">Realizar Pedido</button>
+    <a class="btn btn-outline-success w-100 mt-2" href="#" onclick="enviarPorWhatsApp()">Pedir por WhatsApp</a>
+
   </div>
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://checkout.culqi.com/js/v4"></script>
+
   <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -105,6 +111,9 @@
       totalDiv.innerText = `Total: S/ ${total.toFixed(2)}`;
       document.getElementById('cart-count').innerText = carrito.reduce((acc, el) => acc + el.cantidad, 0);
       localStorage.setItem('carrito', JSON.stringify(carrito));
+      localStorage.setItem('totalCarrito', total.toFixed(2)); // ✅ ahora sí se guarda
+
+
     };
 
     const toggleCarrito = () => {
@@ -122,6 +131,26 @@
       }
       window.location.href = 'checkout.html';
     };
+    function enviarPorWhatsApp() {
+  if (!carrito.length) {
+    alert('Tu carrito está vacío');
+    return;
+  }
+
+  let mensaje = 'Hola, quiero hacer un pedido:\n';
+  carrito.forEach(item => {
+    mensaje += `• ${item.nombre} x${item.cantidad} - S/ ${(item.precio * item.cantidad).toFixed(2)}\n`;
+  });
+
+  const total = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+  mensaje += `\nTotal: S/ ${total.toFixed(2)}`;
+
+  const numeroTelefono = '51953771986'; // ← Cambia esto por tu número real con código país (ej: 51 para Perú)
+  const url = `https://wa.me/${numeroTelefono}?text=${encodeURIComponent(mensaje)}`;
+
+  window.open(url, '_blank');
+}
+
 
     const agregarAlCarrito = (id, nombre, precio) => {
       const existe = carrito.find(p => p.id === id);
@@ -181,9 +210,56 @@
       window.location.href = 'login.html';
     };
 
+    // Culqi Configuración
+    Culqi.publicKey = 'pk_test_9j3tnJnCznXfrk34'; // ← Cambia esto por tu clave pública real
+
+    function pagarConCulqi() {
+      const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+      if (!carrito.length) return alert('Tu carrito está vacío');
+
+      const total = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0).toFixed(2);
+
+      Culqi.options({
+        title: 'Ecommerce Saludable',
+        currency: 'PEN',
+        description: 'Compra de productos saludables',
+        amount: parseInt(total * 100) // Culqi usa centavos
+      });
+
+      Culqi.open();
+    }
+
+    function culqi() {
+      if (Culqi.token) {
+        const token = Culqi.token.id;
+        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+        const amount = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0).toFixed(2);
+
+        fetch('/api/payments/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, amount })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert('Pago realizado con éxito ✅');
+          localStorage.removeItem('carrito');
+          window.location.reload();
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Error al procesar el pago ❌');
+        });
+      } else {
+        console.error(Culqi.error);
+        alert('Error al generar el token');
+      }
+    }
+
     cargarProductos();
     cargarCategorias();
     renderCarrito();
   </script>
 </body>
 </html>
+

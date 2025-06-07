@@ -1,3 +1,14 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const totalSpan = document.getElementById("total");
+  const total = localStorage.getItem("totalCarrito");
+
+  if (total) {
+    totalSpan.textContent = `S/${total}`;
+  } else {
+    totalSpan.textContent = "S/0.00";
+  }
+});
+
 async function validarIIN(cardNumber) {
   try {
     const response = await fetch('/api/payments/validate-iins', {
@@ -19,7 +30,7 @@ function procesarPago() {
     title: 'Mi Tienda',
     currency: 'PEN',
     description: 'Pago por productos',
-    amount: 100,
+    amount: 1000, // en céntimos = S/10.00
   });
   Culqi.open();
 }
@@ -28,19 +39,27 @@ function culqi() {
   if (Culqi.token) {
     const token = Culqi.token.id;
     const email = Culqi.token.email;
-    const amount = 100;
     const bin = Culqi.card.bin;
 
-    validarIIN(bin); // Validación opcional
+    validarIIN(bin); // opcional
 
     fetch('/api/payments/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, email, amount }),
+      body: JSON.stringify({
+        amount: 10, // monto en soles
+        currency: 'PEN',
+        email,
+        name: 'Cliente Web',
+        card_number: Culqi.card.number,
+        cvv: Culqi.card.cvv,
+        expiration_month: Culqi.card.exp_month,
+        expiration_year: Culqi.card.exp_year
+      }),
     })
       .then(response => response.json())
       .then(data => {
-        if (data.message === 'Pago aprobado') {
+        if (data.success) {
           alert('¡Pago realizado con éxito!');
           console.log(data);
         } else {

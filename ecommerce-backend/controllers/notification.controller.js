@@ -4,6 +4,7 @@ const Notification = require('../models/notification');
 exports.crear = async (mensaje) => {
   const noti = new Notification({ mensaje });
   await noti.save();
+  console.log('🔔 Notificación creada:', mensaje); // opcional para depuración
 };
 
 // Obtener todas las notificaciones
