@@ -63,6 +63,9 @@
 
         const result = await res.json();
         alert(result.message || result.msg || 'Usuario registrado con éxito');
+        form.reset(); // Vacía el formulario
+        window.location.href = 'login.html'; // Redirige al login
+
       } catch (error) {
         alert('Error al registrar');
       }
